@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+// Portions Copyright [2022] Payara Foundation and/or affiliates
 
 package org.glassfish.enterprise.concurrent;
 
@@ -175,5 +176,82 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
     @Override
     public long getCompletedTaskCount() {
         return threadPoolExecutor.getCompletedTaskCount();
+    }
+
+    @Override
+    public int getCorePoolSize() {
+        return threadPoolExecutor.getCorePoolSize();
+    }
+
+    @Override
+    public int getActiveCount() {
+        return threadPoolExecutor.getActiveCount();
+    }
+
+    @Override
+    public long getKeepAliveTime() {
+        return threadPoolExecutor.getKeepAliveTime(TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int getLargestPoolSize() {
+        return threadPoolExecutor.getLargestPoolSize();
+    }
+
+    @Override
+    public int getMaximumPoolSize() {
+        return threadPoolExecutor.getMaximumPoolSize();
+    }
+
+    @Override
+    public int getPoolSize() {
+        return threadPoolExecutor.getPoolSize();
+    }
+
+    @Override
+    public BlockingQueue getBlockingQueue() {
+        return threadPoolExecutor.getQueue();
+    }
+
+    @Override
+    public RejectedExecutionHandler getRejectedExecutionHandler() {
+        return threadPoolExecutor.getRejectedExecutionHandler();
+    }
+
+    @Override
+    public ThreadFactory getThreadFactory() {
+        return threadPoolExecutor.getThreadFactory();
+    }
+
+    /**
+     * Gets the policy on whether to continue executing existing periodic tasks
+     * even when this executor has been shutdown. In this case, these tasks will
+     * only terminate upon shutdownNow or after setting the policy to false when
+     * already shutdown. This value is by default false.
+     * @return true if will continue after shutdown.
+     */
+    public boolean getContinueExistingPeriodicTasksAfterShutdownPolicy() {
+        return threadPoolExecutor.getContinueExistingPeriodicTasksAfterShutdownPolicy();
+    }
+
+    /**
+     * Gets the policy on whether to execute existing delayed tasks even when
+     * this executor has been shutdown. In this case, these tasks will only
+     * terminate upon shutdownNow, or after setting the policy to false when
+     * already shutdown. This value is by default true.
+     * @return true if will execute after shutdown.
+     */
+    public boolean getExecuteExistingDelayedTasksAfterShutdownPolicy() {
+        return threadPoolExecutor.getExecuteExistingDelayedTasksAfterShutdownPolicy();
+    }
+
+    /**
+     * Gets the policy on whether cancelled tasks should be immediately removed
+     * from the work queue at time of cancellation. This value is by default
+     * false.
+     * @return true if cancelled tasks are immediately removed from the queue
+     */
+    public boolean getRemoveOnCancelPolicy() {
+        return threadPoolExecutor.getRemoveOnCancelPolicy();
     }
 }

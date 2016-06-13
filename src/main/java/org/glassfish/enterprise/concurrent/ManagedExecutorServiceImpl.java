@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-
+// Portions Copyright [2022] Payara Foundation and/or affiliates
 package org.glassfish.enterprise.concurrent;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -45,7 +45,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import org.glassfish.enterprise.concurrent.internal.ManagedFutureTask;
@@ -179,5 +181,49 @@ public class ManagedExecutorServiceImpl extends AbstractManagedExecutorService {
     public long getCompletedTaskCount() {
         return threadPoolExecutor.getCompletedTaskCount();
     }
-    
+
+   @Override
+    public int getCorePoolSize() {
+        return threadPoolExecutor.getCorePoolSize();
+    }
+
+    @Override
+    public int getActiveCount() {
+        return threadPoolExecutor.getActiveCount();
+    }
+
+    @Override
+    public long getKeepAliveTime() {
+        return threadPoolExecutor.getKeepAliveTime(TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int getLargestPoolSize() {
+        return threadPoolExecutor.getLargestPoolSize();
+    }
+
+    @Override
+    public int getMaximumPoolSize() {
+        return threadPoolExecutor.getMaximumPoolSize();
+    }
+
+    @Override
+    public int getPoolSize() {
+        return threadPoolExecutor.getPoolSize();
+    }
+
+    @Override
+    public BlockingQueue getBlockingQueue() {
+        return threadPoolExecutor.getQueue();
+    }
+
+    @Override
+    public RejectedExecutionHandler getRejectedExecutionHandler() {
+        return threadPoolExecutor.getRejectedExecutionHandler();
+    }
+
+    @Override
+    public ThreadFactory getThreadFactory() {
+        return threadPoolExecutor.getThreadFactory();
+    }
 }
