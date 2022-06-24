@@ -132,7 +132,7 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
     }
 
     @Override
-    protected ExecutorService getThreadPoolExecutor() {
+    protected ExecutorService getExecutor() {
         return threadPoolExecutor;
     }
 
