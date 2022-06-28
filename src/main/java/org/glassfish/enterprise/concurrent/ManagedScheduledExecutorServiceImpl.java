@@ -46,6 +46,8 @@ import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.enterprise.concurrent.Trigger;
 import org.glassfish.enterprise.concurrent.internal.ManagedFutureTask;
+import org.glassfish.enterprise.concurrent.internal.ManagedScheduledExecutor;
+import org.glassfish.enterprise.concurrent.internal.ManagedScheduledForkJoinPool;
 import org.glassfish.enterprise.concurrent.internal.ManagedScheduledThreadPoolExecutor;
 
 /**
@@ -54,14 +56,15 @@ import org.glassfish.enterprise.concurrent.internal.ManagedScheduledThreadPoolEx
 public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutorService 
     implements ManagedScheduledExecutorService {
 
-    protected ManagedScheduledThreadPoolExecutor threadPoolExecutor;
+    protected ManagedScheduledExecutor executor;
     protected final ManagedScheduledExecutorServiceAdapter adapter;
     
 
     public ManagedScheduledExecutorServiceImpl(String name, 
             ManagedThreadFactoryImpl managedThreadFactory, 
             long hungTaskThreshold, 
-            boolean longRunningTasks, 
+            boolean longRunningTasks,
+	    boolean useForkJoinPool, 
             int corePoolSize, 
             long keepAliveTime, 
             TimeUnit keepAliveTimeUnit,
@@ -73,67 +76,71 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
                 contextService != null? contextService.getContextSetupProvider(): null,
                 rejectPolicy);
 
-        threadPoolExecutor = new ManagedScheduledThreadPoolExecutor(corePoolSize, 
-                this.managedThreadFactory);
-        threadPoolExecutor.setKeepAliveTime(keepAliveTime, keepAliveTimeUnit);
-        threadPoolExecutor.setThreadLifeTime(threadLifeTime);
+	if (useForkJoinPool) {
+            executor = new ManagedScheduledForkJoinPool();
+        } else {
+            executor = new ManagedScheduledThreadPoolExecutor(corePoolSize,
+                    this.managedThreadFactory);
+            ((ManagedScheduledThreadPoolExecutor) executor).setKeepAliveTime(keepAliveTime, keepAliveTimeUnit);
+            ((ManagedScheduledThreadPoolExecutor) executor).setThreadLifeTime(threadLifeTime);
+        }
         adapter = new ManagedScheduledExecutorServiceAdapter(this);
     }
     
     @Override
     public ScheduledFuture<?> schedule(Runnable command, Trigger trigger) {
-        return threadPoolExecutor.schedule(this, command, trigger);
+        return executor.schedule(this, command, trigger);
     }
 
     @Override
     public <V> ScheduledFuture<V> schedule(Callable<V> callable, Trigger trigger) {
-        return threadPoolExecutor.schedule(this, callable, trigger);
+        return executor.schedule(this, callable, trigger);
     }
 
     @Override
     public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
-        return threadPoolExecutor.schedule(this, command, null, delay, unit);
+        return executor.schedule(this, command, null, delay, unit);
     }
 
     @Override
     public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
-        return threadPoolExecutor.schedule(this, callable, delay, unit);
+        return executor.schedule(this, callable, delay, unit);
     }
 
     @Override
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        return threadPoolExecutor.scheduleAtFixedRate(this, command, initialDelay, period, unit);
+        return executor.scheduleAtFixedRate(this, command, initialDelay, period, unit);
     }
 
 
     @Override
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
-        return threadPoolExecutor.scheduleWithFixedDelay(this, command, initialDelay, delay, unit);
+        return executor.scheduleWithFixedDelay(this, command, initialDelay, delay, unit);
     }
 
     @Override
     public void execute(Runnable command) {
-        threadPoolExecutor.schedule(this, command, null, 0L, TimeUnit.NANOSECONDS);
+        executor.schedule(this, command, null, 0L, TimeUnit.NANOSECONDS);
     }
     
     @Override
     public Future<?> submit(Runnable task) {
-        return threadPoolExecutor.schedule(this, task, null, 0L, TimeUnit.NANOSECONDS);
+        return executor.schedule(this, task, null, 0L, TimeUnit.NANOSECONDS);
     }
 
     @Override
     public <T> Future<T> submit(Runnable task, T result) {
-        return threadPoolExecutor.schedule(this, task, result, 0L, TimeUnit.NANOSECONDS);
+        return executor.schedule(this, task, result, 0L, TimeUnit.NANOSECONDS);
     }
 
     @Override
     public <T> Future<T> submit(Callable<T> task) {
-        return threadPoolExecutor.schedule(this, task, 0L, TimeUnit.NANOSECONDS);
+        return executor.schedule(this, task, 0L, TimeUnit.NANOSECONDS);
     }
 
     @Override
     protected ExecutorService getExecutor() {
-        return threadPoolExecutor;
+        return (ExecutorService) executor;
     }
 
    /**
@@ -154,73 +161,73 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
 
     @Override
     protected <V> ManagedFutureTask<V> getNewTaskFor(Runnable r, V result) {
-        return threadPoolExecutor.newTaskFor(this, r, result);
+        return executor.newTaskFor(this, r, result);
     }
 
     @Override
     protected <V> ManagedFutureTask<V> getNewTaskFor(Callable<V> callable) {
-        return threadPoolExecutor.newTaskFor(this, callable);
+        return executor.newTaskFor(this, callable);
     }
     
     @Override
     protected void executeManagedFutureTask(ManagedFutureTask task) {
-        // task.submitted() will be called from threadPoolExecutor.delayExecute()
-        threadPoolExecutor.executeManagedTask(task);
+        // task.submitted() will be called from executor.delayExecute()
+        executor.executeManagedTask(task);
     }
 
     @Override
     public long getTaskCount() {
-        return threadPoolExecutor.getTaskCount();
+        return executor.getTaskCount();
     }
     
     @Override
     public long getCompletedTaskCount() {
-        return threadPoolExecutor.getCompletedTaskCount();
+        return executor.getCompletedTaskCount();
     }
 
     @Override
     public int getCorePoolSize() {
-        return threadPoolExecutor.getCorePoolSize();
+        return executor.getCorePoolSize();
     }
 
     @Override
     public int getActiveCount() {
-        return threadPoolExecutor.getActiveCount();
+        return executor.getActiveCount();
     }
 
     @Override
     public long getKeepAliveTime() {
-        return threadPoolExecutor.getKeepAliveTime(TimeUnit.MILLISECONDS);
+        return executor.getKeepAliveTime(TimeUnit.MILLISECONDS);
     }
 
     @Override
     public int getLargestPoolSize() {
-        return threadPoolExecutor.getLargestPoolSize();
+        return executor.getLargestPoolSize();
     }
 
     @Override
     public int getMaximumPoolSize() {
-        return threadPoolExecutor.getMaximumPoolSize();
+        return executor.getMaximumPoolSize();
     }
 
     @Override
     public int getPoolSize() {
-        return threadPoolExecutor.getPoolSize();
+        return executor.getPoolSize();
     }
 
     @Override
     public BlockingQueue getBlockingQueue() {
-        return threadPoolExecutor.getQueue();
+        return executor.getQueue();
     }
 
     @Override
     public RejectedExecutionHandler getRejectedExecutionHandler() {
-        return threadPoolExecutor.getRejectedExecutionHandler();
+        return executor.getRejectedExecutionHandler();
     }
 
     @Override
     public ThreadFactory getThreadFactory() {
-        return threadPoolExecutor.getThreadFactory();
+        return executor.getThreadFactory();
     }
 
     /**
@@ -231,7 +238,7 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
      * @return true if will continue after shutdown.
      */
     public boolean getContinueExistingPeriodicTasksAfterShutdownPolicy() {
-        return threadPoolExecutor.getContinueExistingPeriodicTasksAfterShutdownPolicy();
+        return executor.getContinueExistingPeriodicTasksAfterShutdownPolicy();
     }
 
     /**
@@ -242,7 +249,7 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
      * @return true if will execute after shutdown.
      */
     public boolean getExecuteExistingDelayedTasksAfterShutdownPolicy() {
-        return threadPoolExecutor.getExecuteExistingDelayedTasksAfterShutdownPolicy();
+        return executor.getExecuteExistingDelayedTasksAfterShutdownPolicy();
     }
 
     /**
@@ -252,6 +259,6 @@ public class ManagedScheduledExecutorServiceImpl extends AbstractManagedExecutor
      * @return true if cancelled tasks are immediately removed from the queue
      */
     public boolean getRemoveOnCancelPolicy() {
-        return threadPoolExecutor.getRemoveOnCancelPolicy();
+        return executor.getRemoveOnCancelPolicy();
     }
 }
