@@ -40,7 +40,16 @@
 // Portions Copyright [2022] Payara Foundation and/or affiliates
 package org.glassfish.enterprise.concurrent;
 
-import java.util.concurrent.*;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+
 import javax.enterprise.concurrent.ManagedExecutorService;
 
 import org.glassfish.enterprise.concurrent.internal.ManagedExecutor;
