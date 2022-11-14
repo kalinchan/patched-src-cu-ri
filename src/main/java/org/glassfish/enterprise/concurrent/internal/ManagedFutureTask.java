@@ -136,14 +136,12 @@ public class ManagedFutureTask<V> extends FutureTask<V> implements Future<V> {
         }
     }
    
-    @Override 
+    @Override
     public void run() {
         if (contextSetupException == null) {
             super.run();
-        }
-        else {
-	    abort();
-            }
+        } else {
+            abort();
         }
     }
 
